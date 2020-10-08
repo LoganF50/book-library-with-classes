@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="main.css">
+  <title>My Library</title>
+</head>
+<body>
+  <h1 class="header">My Library</h1>
+  <button id="btn-show-form" class="btn" type="button">New Book</button>
+  <div id="library" class="library"></div>
+  <div id="modal" class="modal modal--closed">
+    <div id="btn-close-modal" class="modal__btn_close">&times</div>
+    <div class="modal__scrollable">
+      <h1 class="modal__header">Add New Book</h1>
+      <form id="add-book-form" action="" method="post">
+        <div class="modal__row"><label class="modal__label" for="new-book-title">Title</label></div>
+        <div class="modal__row"><input class="modal__input" type="text" name="new-book-title" id="new-book-title" required></div>
+        <div class="modal__row"><label class="modal__label" for="new-book-author">Author</label></div>
+        <div class="modal__row"><input class="modal__input" type="text" name="new-book-author" id="new-book-author" required></div>
+        <div class="modal__row"><label class="modal__label" for="new-book-num-pages">Number of pages</label></div>
+        <div class="modal__row"><input class="modal__input modal__input--short" type="number" name="new-book-num-pages" id="new-book-num-pages" min="1" required></div>
+        <div class="modal__row">
+          <label class="modal__label" for="new-book-has-read">I read this book</label>
+          <input class="modal__input" type="checkbox" name="new-book-has-read" id="new-book-has-read">
+        </div>  
+        <button id="btn-add-book" class="btn" type="submit">Add Book</button>
+      </form>
+    </div>
+  </div>
+  <div id="modal-overlay" class="modal__overlay modal--closed"></div>
+  <script src="script.js"></script>
+</body>
+</html>

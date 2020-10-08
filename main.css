@@ -1,0 +1,192 @@
+body {
+  --c-blue: #0d9b8f;
+  --c-orange: #cc703a;
+  --c-main-dark: #2d2d2d;
+  --c-main-dark-lighter-1: #5c5c5c;
+  --c-main-light: #ccd7da;
+  background-color: var(--c-main-dark);
+  color: var(--c-main-light);
+  text-align: center;
+  font-size: 62.5%;
+}
+
+.header {
+  color: var(--c-blue);
+  font-size: 5rem;
+}
+
+.btn {
+  background-color: var(--c-main-light);
+  border: 3px solid var(--c-orange);
+  border-radius: 5px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  transition-duration: 0.5s;
+}
+
+  .btn:hover {
+    background-color: var(--c-orange);
+  }
+
+  .btn--small {
+    font-size: 1rem;
+  }
+
+.card {
+  border: 2px solid var(--c-blue);
+  border-radius: 10px;
+  padding: 15px;
+  margin: 30px;
+  background-color: var(--c-main-dark);
+  position: relative;
+  width: 15rem;
+  box-shadow: 3px 5px 7px 6px var(--c-main-dark);
+}
+
+.card__btn_delete {
+  /* positioning */
+  position: absolute;
+  top: 5px;
+  right: 5px;
+
+  cursor: pointer;
+  font-size: 1.5rem;
+  font-weight: bolder;
+  background-color: transparent;
+  border: none;
+  color: var(--c-orange);
+}
+
+.card__text {
+  font-size: 1.3rem;
+  padding: 5px;
+  margin: 5px;
+}
+
+  .card__text--emphasized {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--c-blue);
+  }
+
+.library {
+  /* positioning */
+  max-width: 90%;
+  margin: 50px auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  min-height: 400px;
+
+  background-color: var(--c-main-dark-lighter-1);
+  border: 2px solid var(--c-orange);
+  border-radius: 10px;
+}
+
+.modal {
+  /* show above all elements */
+  z-index: 1010;
+
+  /* center in form */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  /* sizing */
+  width: 500px;
+  max-width: 100%;
+  height: 500px;
+  max-height: 100%;
+
+  /* padding */
+  padding: 20px;
+
+  border-radius: 10px;
+  background-color: var(--c-blue);
+  font-size: 1.5rem;
+}
+
+.modal__btn_close {
+  /* positioning */
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+
+  cursor: pointer;
+  font-size: 2.2rem;
+  font-weight: bolder;
+  background-color: transparent;
+  border: none;
+  color: var(--c-orange);
+}
+
+.modal__header {
+  
+}
+
+.modal__input {
+  background-color: var(--c-main-light);
+  font-size: 1.2rem;
+  margin: 5px 0 25px;
+  border-radius: 5px;
+  border: 2px solid var(--c-main-dark);
+}
+
+  .modal__input--short {
+    width: 75px;
+  }
+
+.modal__label {
+  font-weight: 500;
+}
+
+.modal__overlay {
+  /* show above all except modal */
+  z-index: 1000;
+
+  /* positioning & sizing */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  /* coloring */
+  opacity: 0.7;
+  background-color: black;
+}
+
+.modal__row {
+  text-align: left;
+  padding-left: 30px;
+}
+
+.modal__scrollable {
+  /* position in modal */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  /* scrolling */
+  overflow: auto;
+}
+
+.modal--closed {
+  display: none;
+}
+
+/* hide spinner buttons on all but firefox */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+/* hide spinner buttons on firefox */
+input[type='number'] {
+  -moz-appearance: textfield;
+}
