@@ -19,18 +19,48 @@ class Model {
     this.library = [];
   }
 
-  addBook(book) {
+  addBook = (book) => {
     this.library.push(book);
+    this.updateLocalLibrary();
   }
 
-  deleteBook(index) {
+  //returns true if no errors else error string
+  bookValidation = (title, author, numPages) => {
+    let errStr = '';
+    if(title == '') {
+      errStr += 'Title cannot be blank.\n';
+    }
+    if(author == '') {
+      errStr += 'Author cannot be blank.\n';
+    }
+    if(numPages < 1) {
+      errStr += 'Number of pages cannot be less than 1.\n';
+    }
+    if(isNaN(numPages)) {
+      errStr += 'Number of pages must be a number.\n';
+    }
+    if(errStr.length > 0) {
+      errStr = 'Please fix these errors before continuing:\n\n' + errStr;
+      return errStr;
+    } else {
+      return true;
+    }
+  }
+
+  changeReadStatus = (index) => {
+    this.library[index].hasRead = !this.library[index].hasRead;
+    this.updateLocalLibrary();
+  }
+
+  deleteBook = (index) => {
     this.library.splice(index, 1);
+    this.updateLocalLibrary();
   }
 
-  refreshLibrary() {
+  refreshLibrary = () => {
     if(localStorage.getItem('myLibrary') === null) {
       this.library = [new Book('Hunger Games', 'Suzanne Collins', 374, true), new Book('Harry Potter and the Order of the Phoenix', 'J.K. Rowling', 870, false), new Book('To Kill a Mockingbird', 'Harper Lee', 324, true)];
-      updateLocalStorage();
+      this.updateLocalLibrary();
     } else {
       const myLibrary = JSON.parse(localStorage.getItem('myLibrary'));
       this.library = [];
@@ -40,7 +70,7 @@ class Model {
     }
   }
 
-  updateLocalLibrary() {
+  updateLocalLibrary = () => {
     localStorage.setItem('myLibrary', JSON.stringify(this.library));
   }
 }
@@ -48,7 +78,94 @@ class Model {
 //VIEW
 class View {
   constructor() {
+    this.formAddBook = document.querySelector('#add-book-form');
+    this.library = document.querySelector('#library');
+    this.modal = document.querySelector('#modal');
+    this.modalOverlay = document.querySelector('#modal-overlay');
+  }
 
+  //add book to end of library
+  addBook = (book) => {
+    const libraryLength = document.querySelectorAll('.js-card').length;
+    const card = this.createBookDOMNode(book, libraryLength);
+    this.library.appendChild(card);
+  }
+
+  changeReadStatus = (index, changeToHasRead) => {
+    const hasReadElements = document.querySelectorAll('.js-read-status');
+    hasReadElements[index].innerText = changeToHasRead ? 'read' : 'not read';
+  }
+
+  closeForm = () => {
+    this.modal.classList.add('modal--closed');
+    this.modalOverlay.classList.add('modal--closed');
+    this.formAddBook.reset();
+  }
+
+  //creates a DOM node from a book (no eventListeners)
+  createBookDOMNode = (book, index) => {
+    const domCard = document.createElement('div');
+    domCard.classList.add('card', 'js-card');
+    domCard.dataset.index = `${index}`;
+
+    const domDelete = document.createElement('i');
+    domDelete.classList.add('material-icons', 'card__btn_delete', 'js-delete-book');
+    domDelete.innerText = 'delete';
+    domCard.appendChild(domDelete);
+
+    const domTitle = document.createElement('div');
+    domTitle.classList.add('card__text', 'card__text--emphasized');
+    domTitle.innerText = book.title;
+    domCard.appendChild(domTitle);
+    
+    const domBy = document.createElement('div');
+    domBy.classList.add('card__text');
+    domBy.innerText = 'by';
+    domCard.appendChild(domBy);
+
+    const domAuthor = document.createElement('div');
+    domAuthor.classList.add('card__text', 'card__text--emphasized');
+    domAuthor.innerText = book.author;
+    domCard.appendChild(domAuthor);
+
+    const domNumPages = document.createElement('div');
+    domNumPages.classList.add('card__text');
+    domNumPages.innerText = `${book.numPages} pages`;
+    domCard.appendChild(domNumPages);
+
+    const domHasRead = document.createElement('div');
+    domHasRead.classList.add('card__text', 'js-read-status');
+    domHasRead.innerText = book.hasRead ? 'read' : 'not read';
+    domCard.appendChild(domHasRead);
+
+    const domBtn = document.createElement('button');
+    domBtn.classList.add('btn', 'btn--small', 'js-change-status');
+    domBtn.innerText = 'Change read status';
+    domCard.appendChild(domBtn);
+
+    return domCard;
+  }
+
+  //delete book at index
+  deleteBook = (index) => {
+    const cards = document.querySelectorAll('.js-card');
+    cards[index].remove();
+  }
+
+  openForm = () => {
+    this.modal.classList.remove('modal--closed');
+    this.modalOverlay.classList.remove('modal--closed');
+  }
+
+  renderBooks = (books) => {
+    //remove current books
+    while(this.library.firstChild) {
+      this.library.removeChild(this.library.lastChild);
+    }
+    //render new books
+    for(let i = 0; i < books.length; i++) {
+      this.addBook(books[i]);
+    }
   }
 };
 
@@ -57,76 +174,78 @@ class Controller {
   constructor(model, view) {
     this.model = model;
     this.view = view;
+    this.btnOpenForm = document.querySelector('#btn-show-form');
+    this.btnCloseForm = document.querySelector('#btn-close-modal');
+    this.btnAddBook = document.querySelector('#btn-add-book');
+    this.newBookAuthor = document.querySelector('#new-book-author');
+    this.newBookHasRead = document.querySelector('#new-book-has-read');
+    this.newBookNumPages = document.querySelector('#new-book-num-pages');
+    this.newBookTitle = document.querySelector('#new-book-title');
+  }
+  //add eventListeners to card buttons
+  addDynamicListeners = () => {
+    const deleteButtons = document.querySelectorAll('.js-delete-book');
+    const changeStatusButtons = document.querySelectorAll('.js-change-status');
+
+    Array.from(deleteButtons).forEach(btn => btn.addEventListener('click', this.handleDeletingBook));
+    Array.from(changeStatusButtons).forEach(btn => btn.addEventListener('click', this.handleChangingStatus));
+  }
+
+  //add eventListeners to static buttons
+  addStaticListeners = () => {
+    //open form
+    this.btnOpenForm.addEventListener('click', this.view.openForm);
+    //close form
+    this.btnCloseForm.addEventListener('click', this.view.closeForm);
+    this.view.modalOverlay.addEventListener('click', this.view.closeForm);
+    //add book
+    this.btnAddBook.addEventListener('click', this.handleAddingBook);
+  }
+  
+  //if form is valid: add book, and rerender (w/ updated indices)
+  handleAddingBook = (e) => {
+    e.preventDefault;
+    //true if valid else string of errors to fix
+    const validationResult = this.model.bookValidation(this.newBookTitle.value, this.newBookAuthor.value, this.newBookNumPages.value);
+    //add book to model, render books, and close form
+    if(validationResult === true) {
+      const newBook = new Book(this.newBookTitle.value, this.newBookAuthor.value, this.newBookNumPages.value, this.newBookHasRead.checked);
+      this.model.addBook(newBook);
+      this.view.renderBooks(this.model.library);
+      this.addDynamicListeners();
+      this.view.closeForm();
+    } else {
+      alert(validationResult);
+    }
+  }
+
+  //change read status on a book
+  handleChangingStatus = (e) => {
+    const card = e.target.parentElement;
+    const index = card.dataset.index;
+    console.log({card, index});
+    this.model.changeReadStatus(index);
+    this.view.changeReadStatus(index, this.model.library[index].hasRead);
+
+  }
+
+  //delete book and rerender (w/ updated indices)
+  handleDeletingBook = (e) => {
+    const card = e.target.parentElement;
+    const index = card.dataset.index;
+    this.view.deleteBook(index);
+    this.model.deleteBook(index);
+    this.view.renderBooks(this.model.library);
+    this.addDynamicListeners();
+  }
+
+  loadPage = () => {
+    this.addStaticListeners();
+    this.model.refreshLibrary();
+    this.view.renderBooks(this.model.library);
+    this.addDynamicListeners();
   }
 };
-
-//OLD CODEBASE
-let jsLibrary = [];
-
-function Book(title, author, numPages, hasRead) {
-  this.author = author
-  this.hasRead = hasRead
-  this.numPages = numPages
-  this.title = title
-}
-
-//returns info of book
-Book.prototype.info = function() {
-  let hasReadStr = this.hasRead ? 'already read' : 'not read';
-  return `${this.title} by ${this.author}, ${this.numPages} pages, ` + hasReadStr;
-}
-
-//returns node to add to DOM
-Book.prototype.getDomNode = function(index) {
-  let domCard = document.createElement('div');
-  let domDelete = document.createElement('i');
-  let domTitle = document.createElement('div');
-  let domBy = document.createElement('div');
-  let domAuthor = document.createElement('div');
-  let domNumPages = document.createElement('div');
-  let domHasRead = document.createElement('div');
-  let domBtn = document.createElement('button');
-
-  domCard.classList.add('card');
-  domCard.dataset.index = `${index}`;
-
-  domDelete.classList.add('material-icons', 'card__btn_delete');
-  domDelete.innerText = 'delete';
-  domDelete.addEventListener('click', deleteBook);
-  domCard.appendChild(domDelete);
-
-  domTitle.classList.add('card__text', 'card__text--emphasized');
-  domTitle.innerText = this.title;
-  domCard.appendChild(domTitle);
-
-  domBy.classList.add('card__text');
-  domBy.innerText = 'by';
-  domCard.appendChild(domBy);
-
-  domAuthor.classList.add('card__text', 'card__text--emphasized');
-  domAuthor.innerText = this.author;
-  domCard.appendChild(domAuthor);
-
-  domNumPages.classList.add('card__text');
-  domNumPages.innerText = `${this.numPages} pages`;
-  domCard.appendChild(domNumPages);
-
-  domHasRead.classList.add('card__text');
-  domHasRead.innerText = this.hasRead ? 'read' : 'not read';
-  domCard.appendChild(domHasRead);
-
-  domBtn.classList.add('btn', 'btn--small');
-  domBtn.innerText = 'Change read status';
-  domBtn.addEventListener('click', toggleHasRead);
-  domCard.appendChild(domBtn);
-
-  return domCard;
-}
-
-function addBookToLibrary(book) {
-  jsLibrary.push(book);
-  updateLocalStorage();
-}
 
 /*
 TODO different style when read to stand out (green text/checkmark)
@@ -134,133 +253,8 @@ TODO organize code better (refactor if necessary)
 TODO change status button same place in each card (independent of text sizes)
 */
 
-//deletes book from dom and js
-function deleteBook(e) {
-  const card = e.target.parentElement;
-  const index = card.dataset.index;
-  card.remove();
-  jsLibrary.splice(index,1); //remove 1 element from index
-  updateLocalStorage();
-}
-
-//renders js library in dom
-function renderBooks() {
-  //remove current books
-  while(library.firstChild) {
-    library.removeChild(library.lastChild);
-  }
-  //add updated library
-  for(let i = 0; i < jsLibrary.length; i++) {
-    library.appendChild(jsLibrary[i].getDomNode(i));
-  }
-}
-
-//toggles book's hasRead in dom and js
-function toggleHasRead(e) {
-  const card = e.target.parentElement;
-  const index = card.dataset.index;
-  jsLibrary[index].hasRead = !jsLibrary[index].hasRead;
-  //TODO better way to get read status element?
-  card.childNodes[5].innerText = jsLibrary[index].hasRead ? 'read' : 'not read'; //get read status element
-  updateLocalStorage();
-}
-
-//close modal form
-function closeForm() {
-  modal.classList.toggle('modal--closed');
-  modalOverlay.classList.toggle('modal--closed');
-  formAddBook.reset();
-}
-
-//open modal form
-function openForm() {
-  modal.classList.toggle('modal--closed');
-  modalOverlay.classList.toggle('modal--closed');
-}
-
-//validate input
-function isValidForm() {
-  let errStr = '';
-  if(bookTitle.value == '') {
-    errStr += '-Title cannot be blank.\n';
-  } 
-  if(bookAuthor.value == '') {
-    errStr += '-Author cannot be blank.\n';
-  }
-  if(bookNumPages.value < 1) {
-    errStr += '-Number of pages cannot be less than 1.\n';
-  }
-  if(isNaN(bookNumPages.value)) {
-    errStr += '-Number of pages must be a number.\n';
-  }
-  if(errStr.length > 0) {
-    alert(`Please fix these errors before continuing:\n\n ${errStr}`);
-    return false;
-  } else {
-    return true;
-  }
-}
-
-//if form is valid then add book and close form
-function handleAddingBook(e) {
-  e.preventDefault();
-  if(isValidForm()) {
-    const newBook = new Book(bookTitle.value, bookAuthor.value, bookNumPages.value, bookHasRead.checked);
-    addBookToLibrary(newBook);
-    renderBooks();
-    closeForm();
-  }
-}
-
-//update localStorage for library
-function updateLocalStorage() {
-  localStorage.setItem('myLibrary', JSON.stringify(jsLibrary));
-}
-
-//get library from localStorage if available else fill with pre-defined books
-function refreshLibrary() {
-  if(localStorage.getItem('myLibrary') === null) {
-    jsLibrary = [new Book('Hunger Games', 'Suzanne Collins', 374, true), new Book('Harry Potter and the Order of the Phoenix', 'J.K. Rowling', 870, false), new Book('To Kill a Mockingbird', 'Harper Lee', 324, true)];
-    updateLocalStorage();
-  } else {
-    let myLibrary = JSON.parse(localStorage.getItem('myLibrary'));
-    jsLibrary = [];
-    myLibrary.forEach(book => {
-      jsLibrary.push(new Book(book.title, book.author, book.numPages, book.hasRead));
-    });
-  }
-}
-
-//DOM Elements
-//buttons
-const btnOpenForm = document.querySelector('#btn-show-form');
-const btnCloseForm = document.querySelector('#btn-close-modal');
-const btnAddBook = document.querySelector('#btn-add-book');
-
-//blocks
-const library = document.querySelector('#library');
-const modal = document.querySelector('#modal');
-const modalOverlay = document.querySelector('#modal-overlay');
-const formAddBook = document.querySelector('#add-book-form');
-
-//inputs
-const bookTitle = document.querySelector('#new-book-title');
-const bookAuthor = document.querySelector('#new-book-author');
-const bookNumPages = document.querySelector('#new-book-num-pages');
-const bookHasRead = document.querySelector('#new-book-has-read');
-
-//eventListeners
-//close modal when clicked outside form
-window.onclick = function(e){
-  if(e.target == modalOverlay) {
-    closeForm();
-  }
-}
-
-btnOpenForm.addEventListener('click', openForm);
-btnCloseForm.addEventListener('click', closeForm);
-btnAddBook.addEventListener('click', handleAddingBook);
-
-//run on start
-refreshLibrary();
-renderBooks();
+//RUNTIME
+const model = new Model();
+const view = new View();
+const controller = new Controller(model, view);
+controller.loadPage();
